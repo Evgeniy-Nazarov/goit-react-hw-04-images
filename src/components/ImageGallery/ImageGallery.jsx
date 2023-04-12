@@ -1,3 +1,4 @@
+import Button from 'components/Button/Button';
 import ImageFallbackView from 'components/ImageFallbackView/ImageFallbackView';
 import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import Loader from 'components/Loader/Loader';
@@ -8,6 +9,13 @@ export default class ImageGallery extends Component {
     pictureName: null,
     error: null,
     status: 'idle',
+    currentPage: 1,
+  };
+
+  loadMore = () => {
+    this.setState(prevState => ({
+      currentPage: prevState.currentPage + 1,
+    }));
   };
 
   componentDidUpdate(prevProps, prevState) {
@@ -20,7 +28,7 @@ export default class ImageGallery extends Component {
 
       setTimeout(() => {
         fetch(
-          `https://pixabay.com/api/?q=${nextName}&page=1&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+          `https://pixabay.com/api/?q=${nextName}&page=1&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12&page=${this.state.currentPage}`
         )
           .then(response => {
             if (response.ok && response.status === 200) {
@@ -59,6 +67,10 @@ export default class ImageGallery extends Component {
           <ImageGalleryItem hits={hits} />
         </ul>
       );
+    }
+
+    if (status === 'resolved') {
+      return <Button loadMore={this.loadMore} />;
     }
   }
 }
