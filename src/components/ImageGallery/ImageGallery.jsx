@@ -1,61 +1,64 @@
-import { Component } from "react";
-
+import ImageFallbackView from 'components/ImageFallbackView/ImageFallbackView';
+import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
+import Loader from 'components/Loader/Loader';
+import { Component } from 'react';
 
 export default class ImageGallery extends Component {
+  state = {
+    pictureName: null,
+    error: null,
+    status: 'idle',
+  };
 
-    state = {
-        pictureName: null,
-        error: null,
-        status: 'idle'
-    };
+  componentDidUpdate(prevProps, prevState) {
+    const API_KEY = '33830559-b80d1d0487f9caaadda577109';
+    const prevName = prevProps.searchName;
+    const nextName = this.props.searchName;
 
-    componentDidUpdate(prevProps, prevState) { 
+    if (prevName !== nextName) {
+      this.setState({ status: 'pending' });
 
-        const prevName = prevProps.searchName;
-        const nextName = this.props.searchName;
-        
-        if (prevName !== nextName) {
-            
-            this.setState({ status: 'pending'});
-            fetch(`https://pixabay.com/api/?q=${nextName}&page=1&key=33830559-b80d1d0487f9caaadda577109&image_type=photo&orientation=horizontal&per_page=12`)
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    }
+      setTimeout(() => {
+        fetch(
+          `https://pixabay.com/api/?q=${nextName}&page=1&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+        )
+          .then(response => {
+            if (response.ok && response.status === 200) {
+              return response.json();
+            }
+          })
+          .then(pictureName => {
+            if (pictureName.total === 0) {
+              return Promise.reject(
+                new Error(`Изображение ${nextName} не найдено`)
+              );
+            }
+            this.setState({ pictureName, status: 'resolved' });
+          })
 
-                    return Promise.reject(
-                        new Error(`Картинка с именем ${nextName} не найдена`),
-                        );
-                })
-                .then(pictureName => this.setState({ pictureName, status: 'resolved' }))
-                .catch(error => this.setState({error, status: 'rejected'}))
+          .catch(error => this.setState({ error, status: 'rejected' }));
+      }, 3000);
+    }
   }
-    
-    }
 
-    render() { 
-        const { pictureName, error, status } = this.state;
-
-if (status === 'idle') {
-  return <div>Введите название картинки</div>;
-    }
+  render() {
+    const { pictureName, error, status } = this.state;
+    const hits = pictureName?.hits;
 
     if (status === 'pending') {
-        return <div>Loading</div>
+      return <Loader />;
     }
-          
 
-          if (status === 'rejected') {
-            return <h1>{error.message}</h1>
-        }
-              
-        if (status === 'resolved') {
-            return <ul>
-            <li className="gallery-item">
-                <img src={pictureName.hits[1].webformatURL} alt={ pictureName.hits[1].tags} />
-            </li>
+    if (status === 'rejected') {
+      return <ImageFallbackView message={error.message} />;
+    }
+
+    if (status === 'resolved') {
+      return (
+        <ul className="image-gallery">
+          <ImageGalleryItem hits={hits} />
         </ul>
-        }
+      );
     }
-
+  }
 }
