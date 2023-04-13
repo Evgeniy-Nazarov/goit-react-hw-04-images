@@ -22,13 +22,41 @@ export default class ImageGallery extends Component {
     const API_KEY = '33830559-b80d1d0487f9caaadda577109';
     const prevName = prevProps.searchName;
     const nextName = this.props.searchName;
+    const prevPage = prevState.currentPage;
+    const nextPage = this.state.currentPage;
+
+    if (prevPage !== nextPage) {
+      fetch(
+        `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+      )
+        .then(response => {
+          if (response.ok && response.status === 200) {
+            return response.json();
+          }
+        })
+        .then(pictureName => {
+          if (pictureName.total === 0) {
+            return Promise.reject(
+              new Error(`Изображение ${nextName} не найдено`)
+            );
+          }
+          this.setState(prevState => ({
+            pictureName: {
+              ...prevState.pictureName,
+              hits: [...prevState.pictureName.hits, ...pictureName.hits],
+            },
+          }));
+        })
+
+        .catch(error => this.setState({ error, status: 'rejected' }));
+    }
 
     if (prevName !== nextName) {
       this.setState({ status: 'pending' });
 
       setTimeout(() => {
         fetch(
-          `https://pixabay.com/api/?q=${nextName}&page=1&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12&page=${this.state.currentPage}`
+          `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
         )
           .then(response => {
             if (response.ok && response.status === 200) {
@@ -46,6 +74,7 @@ export default class ImageGallery extends Component {
 
           .catch(error => this.setState({ error, status: 'rejected' }));
       }, 3000);
+
     }
   }
 
@@ -63,14 +92,13 @@ export default class ImageGallery extends Component {
 
     if (status === 'resolved') {
       return (
+        <div>
         <ul className="image-gallery">
           <ImageGalleryItem hits={hits} />
         </ul>
+        {hits.length > 0 && <Button onClick={this.loadMore} />}
+        </div>
       );
-    }
-
-    if (status === 'resolved') {
-      return <Button loadMore={this.loadMore} />;
     }
   }
 }
