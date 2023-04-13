@@ -1,10 +1,15 @@
+import PropTypes from 'prop-types';
 import errorImage from '../errorImage.jpg';
 
 export default function ImageFallbackView({ message }) {
   return (
     <div>
-      <img src={errorImage} width="240" alt="error" />
-      <p>{message}</p>
+      <img className="image-error" src={errorImage} width="600" alt="error" />
+      <p className="text-error">{message}</p>
     </div>
   );
 }
+
+ImageFallbackView.propTypes = {
+  message: PropTypes.string.isRequired,
+};

@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { TailSpin } from 'react-loader-spinner';
+import PropTypes from 'prop-types';
 
 export default class Loader extends Component {
   render() {
@@ -20,3 +21,7 @@ export default class Loader extends Component {
     );
   }
 }
+
+Loader.propTypes = {
+  visible: PropTypes.bool.isRequired,
+};

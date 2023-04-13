@@ -1,4 +1,5 @@
 import Button from 'components/Button/Button';
+import PropTypes from 'prop-types';
 import ImageFallbackView from 'components/ImageFallbackView/ImageFallbackView';
 import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import Loader from 'components/Loader/Loader';
@@ -13,18 +14,6 @@ export default class ImageGallery extends Component {
     currentPage: 1,
     openModal: false,
     currentImage: '',
-  };
-
-  toggleModal = () => {
-    this.setState(({ openModal }) => ({
-      openModal: !openModal,
-    }));
-  };
-
-  loadMore = () => {
-    this.setState(prevState => ({
-      currentPage: prevState.currentPage + 1,
-    }));
   };
 
   componentDidUpdate(prevProps, prevState) {
@@ -63,28 +52,39 @@ export default class ImageGallery extends Component {
     if (prevName !== nextName) {
       this.setState({ status: 'pending' });
 
-      setTimeout(() => {
-        fetch(
-          `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-        )
-          .then(response => {
-            if (response.ok && response.status === 200) {
-              return response.json();
-            }
-          })
-          .then(pictureName => {
-            if (pictureName.total === 0) {
-              return Promise.reject(
-                new Error(`Изображение ${nextName} не найдено`)
-              );
-            }
-            this.setState({ pictureName, status: 'resolved' });
-          })
+      fetch(
+        `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+      )
+        .then(response => {
+          if (response.ok && response.status === 200) {
+            return response.json();
+          }
+        })
+        .then(pictureName => {
+          if (pictureName.total === 0) {
+            return Promise.reject(
+              new Error(`Изображение ${nextName} не найдено`)
+            );
+          }
+          this.setState({ pictureName, status: 'resolved' });
+        })
 
-          .catch(error => this.setState({ error, status: 'rejected' }));
-      }, 1000);
+        .catch(error => this.setState({ error, status: 'rejected' }));
     }
   }
+
+  toggleModal = () => {
+    this.setState(({ openModal }) => ({
+      openModal: !openModal,
+    }));
+  };
+
+  loadMore = () => {
+    this.setState(prevState => ({
+      currentPage: prevState.currentPage + 1,
+    }));
+  };
+
   updateModalImage = img => {
     console.log(img);
     this.setState({ currentImage: img.largeImageURL });
@@ -114,9 +114,13 @@ export default class ImageGallery extends Component {
             />
           </ul>
           {hits.length > 11 && <Button onClick={this.loadMore} />}
-          {openModal && <Modal state={this.state} />}
+          {openModal && <Modal state={this.state} onClose={this.toggleModal} />}
         </div>
       );
     }
   }
 }
+
+ImageGallery.propTypes = {
+  searchName: PropTypes.string.isRequired,
+};
