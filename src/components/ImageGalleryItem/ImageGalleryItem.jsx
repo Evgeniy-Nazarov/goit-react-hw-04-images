@@ -1,21 +1,21 @@
-import { Component } from "react";
-
-
-
-
+import { Component } from 'react';
 
 export default class ImageGalleryItem extends Component {
+  render() {
+    const { hits, onClick, updateImg } = this.props;
 
-
-    render() {
-      const { hits, onClick } = this.props;
-      
-
-  
-  return hits.map(({ id, webformatURL, tags }) => (
-    <li className="gallery-item" key={id}>
-      <img className="gallery-item-image"  src={webformatURL} alt={tags} onClick={() => onClick()} />
-    </li>
-  ));
-}
+    return hits.map(hit => (
+      <li className="gallery-item" key={hit.id}>
+        <img
+          className="gallery-item-image"
+          src={hit.webformatURL}
+          alt={hit.tags}
+          onClick={() => {
+            onClick();
+            updateImg(hit);
+          }}
+        />
+      </li>
+    ));
+  }
 }

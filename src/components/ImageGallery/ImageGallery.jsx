@@ -16,9 +16,8 @@ export default class ImageGallery extends Component {
   };
 
   toggleModal = () => {
-    this.setState(({ openModal, currentImage, pictureName }) => ({
+    this.setState(({ openModal }) => ({
       openModal: !openModal,
-      currentImage: pictureName.hits[0].largeImageURL,
     }));
   };
 
@@ -84,10 +83,12 @@ export default class ImageGallery extends Component {
 
           .catch(error => this.setState({ error, status: 'rejected' }));
       }, 1000);
-
     }
   }
-
+  updateModalImage = img => {
+    console.log(img);
+    this.setState({ currentImage: img.largeImageURL });
+  };
 
   render() {
     const { pictureName, error, status, openModal } = this.state;
@@ -104,16 +105,18 @@ export default class ImageGallery extends Component {
     if (status === 'resolved') {
       return (
         <div>
-        <ul className="image-gallery">
-          <ImageGalleryItem hits={hits} onClick={this.toggleModal} state={this.state}  />
-        </ul>
-        {hits.length > 11 && <Button onClick={this.loadMore} />}
-        { openModal && <Modal state={this.state}/>}
-
+          <ul className="image-gallery">
+            <ImageGalleryItem
+              hits={hits}
+              onClick={this.toggleModal}
+              state={this.state}
+              updateImg={this.updateModalImage}
+            />
+          </ul>
+          {hits.length > 11 && <Button onClick={this.loadMore} />}
+          {openModal && <Modal state={this.state} />}
         </div>
-        
       );
-      }
-
+    }
   }
 }
