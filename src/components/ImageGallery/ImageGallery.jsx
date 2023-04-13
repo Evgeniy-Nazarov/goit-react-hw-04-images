@@ -2,6 +2,7 @@ import Button from 'components/Button/Button';
 import ImageFallbackView from 'components/ImageFallbackView/ImageFallbackView';
 import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import Loader from 'components/Loader/Loader';
+import Modal from 'components/Modal/Modal';
 import { Component } from 'react';
 
 export default class ImageGallery extends Component {
@@ -10,6 +11,15 @@ export default class ImageGallery extends Component {
     error: null,
     status: 'idle',
     currentPage: 1,
+    openModal: false,
+    currentImage: '',
+  };
+
+  toggleModal = () => {
+    this.setState(({ openModal, currentImage, pictureName }) => ({
+      openModal: !openModal,
+      currentImage: pictureName.hits[0].largeImageURL,
+    }));
   };
 
   loadMore = () => {
@@ -73,13 +83,14 @@ export default class ImageGallery extends Component {
           })
 
           .catch(error => this.setState({ error, status: 'rejected' }));
-      }, 3000);
+      }, 1000);
 
     }
   }
 
+
   render() {
-    const { pictureName, error, status } = this.state;
+    const { pictureName, error, status, openModal } = this.state;
     const hits = pictureName?.hits;
 
     if (status === 'pending') {
@@ -94,11 +105,15 @@ export default class ImageGallery extends Component {
       return (
         <div>
         <ul className="image-gallery">
-          <ImageGalleryItem hits={hits} />
+          <ImageGalleryItem hits={hits} onClick={this.toggleModal} state={this.state}  />
         </ul>
-        {hits.length > 0 && <Button onClick={this.loadMore} />}
+        {hits.length > 11 && <Button onClick={this.loadMore} />}
+        { openModal && <Modal state={this.state}/>}
+
         </div>
+        
       );
-    }
+      }
+
   }
 }
