@@ -13,6 +13,12 @@ export default class Modal extends Component {
     window.removeEventListener('keydown', this.handleKeyDown);
   }
 
+  handleBackDropClick = e => {
+    if (e.currentTarget === e.target) {
+      this.props.onClose();
+    }
+  };
+
   handleKeyDown = e => {
     if (e.code === 'Escape') {
       this.props.onClose();
@@ -25,7 +31,7 @@ export default class Modal extends Component {
     } = this.props;
     console.log(currentImage);
     return createPortal(
-      <div className="overlay">
+      <div className="overlay" onClick={this.handleBackDropClick} >
         <div className="modal">
           <img src={currentImage} alt="" />
         </div>
