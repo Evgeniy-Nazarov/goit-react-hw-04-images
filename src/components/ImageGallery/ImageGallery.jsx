@@ -11,9 +11,9 @@ export default class ImageGallery extends Component {
     pictureName: null,
     error: null,
     status: 'idle',
-    currentPage: 1,
     openModal: false,
     currentImage: '',
+    currentPage: 1,
   };
 
   componentDidUpdate(prevProps, prevState) {
@@ -23,7 +23,33 @@ export default class ImageGallery extends Component {
     const prevPage = prevState.currentPage;
     const nextPage = this.state.currentPage;
 
+    if (prevName !== nextName) {
+      this.setState({ currentPage: 1 });
+      this.prevState = { currentPage: 1 };
+
+      fetch(
+        `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+      )
+        .then(response => {
+          if (response.ok && response.status === 200) {
+            return response.json();
+          }
+        })
+        .then(pictureName => {
+          if (pictureName.total === 0) {
+            return Promise.reject(
+              new Error(`Изображение ${nextName} не найдено`)
+            );
+          }
+          this.setState({ pictureName, status: 'resolved' });
+        })
+
+        .catch(error => this.setState({ error, status: 'rejected' }));
+    }
+
+
     if (prevPage !== nextPage) {
+
       fetch(
         `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
       )
@@ -49,28 +75,7 @@ export default class ImageGallery extends Component {
         .catch(error => this.setState({ error, status: 'rejected' }));
     }
 
-    if (prevName !== nextName) {
-      this.setState({ status: 'pending' });
-
-      fetch(
-        `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-      )
-        .then(response => {
-          if (response.ok && response.status === 200) {
-            return response.json();
-          }
-        })
-        .then(pictureName => {
-          if (pictureName.total === 0) {
-            return Promise.reject(
-              new Error(`Изображение ${nextName} не найдено`)
-            );
-          }
-          this.setState({ pictureName, status: 'resolved' });
-        })
-
-        .catch(error => this.setState({ error, status: 'rejected' }));
-    }
+  
   }
 
   toggleModal = () => {
@@ -86,7 +91,6 @@ export default class ImageGallery extends Component {
   };
 
   updateModalImage = img => {
-    console.log(img);
     this.setState({ currentImage: img.largeImageURL });
   };
 

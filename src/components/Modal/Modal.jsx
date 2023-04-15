@@ -29,7 +29,6 @@ export default class Modal extends Component {
     const {
       state: { currentImage },
     } = this.props;
-    console.log(currentImage);
     return createPortal(
       <div className="overlay" onClick={this.handleBackDropClick} >
         <div className="modal">
