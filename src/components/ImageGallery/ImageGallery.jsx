@@ -5,6 +5,8 @@ import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import Loader from 'components/Loader/Loader';
 import Modal from 'components/Modal/Modal';
 import { Component } from 'react';
+import { FetchImages } from 'components/API/API';
+import { Report } from 'notiflix';
 
 export default class ImageGallery extends Component {
   state = {
@@ -13,80 +15,74 @@ export default class ImageGallery extends Component {
     status: 'idle',
     openModal: false,
     currentImage: '',
-    currentPage: 1,
+    currentPage: 2,
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    const API_KEY = '33830559-b80d1d0487f9caaadda577109';
-    const prevName = prevProps.searchName;
+  searchImages = async () => {
     const nextName = this.props.searchName;
-    const prevPage = prevState.currentPage;
-    const nextPage = this.state.currentPage;
+    try {
+      this.setState({ currentPage: 2 });
+      const response = await FetchImages(nextName);
 
-    if (prevName !== nextName) {
-      this.setState({ currentPage: 1 });
-      this.prevState = { currentPage: 1 };
+      if (response.total === 0) {
+        Report.info(
+          'Sorry, there are no images matching your search query. Please try again.',
+          'No matches found'
+        );
+        this.setState({ status: 'idle' });
+      }
 
-      fetch(
-        `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-      )
-        .then(response => {
-          if (response.ok && response.status === 200) {
-            return response.json();
-          }
-        })
-        .then(pictureName => {
-          if (pictureName.total === 0) {
-            return Promise.reject(
-              new Error(`Изображение ${nextName} не найдено`)
-            );
-          }
-          this.setState({ pictureName, status: 'resolved' });
-        })
-
-        .catch(error => this.setState({ error, status: 'rejected' }));
+      if (response.total > 0) {
+        this.setState({ pictureName: response, status: 'resolved' });
+      }
+    } catch (error) {
+      this.setState({ error, status: 'rejected' });
     }
-
-
-    if (prevPage !== nextPage) {
-
-      fetch(
-        `https://pixabay.com/api/?q=${nextName}&page=${nextPage}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-      )
-        .then(response => {
-          if (response.ok && response.status === 200) {
-            return response.json();
-          }
-        })
-        .then(pictureName => {
-          if (pictureName.total === 0) {
-            return Promise.reject(
-              new Error(`Изображение ${nextName} не найдено`)
-            );
-          }
-          this.setState(prevState => ({
-            pictureName: {
-              ...prevState.pictureName,
-              hits: [...prevState.pictureName.hits, ...pictureName.hits],
-            },
-          }));
-        })
-
-        .catch(error => this.setState({ error, status: 'rejected' }));
-    }
-
-  
-  }
-
-  toggleModal = () => {
-    this.setState(({ openModal }) => ({
-      openModal: !openModal,
-    }));
   };
 
   loadMore = () => {
     this.setState(prevState => ({
       currentPage: prevState.currentPage + 1,
+    }));
+  };
+
+  handleLoadMore = async () => {
+    this.setState({ status: 'pending' });
+    this.loadMore();
+    const nextName = this.props.searchName;
+    const nextPage = this.state.currentPage;
+
+    try {
+      const response = await FetchImages(nextName, nextPage);
+
+      const nextImages = response.hits;
+      const prevImages = this.state.pictureName.hits;
+      const allImages = [...prevImages, ...nextImages];
+
+      this.setState(prevState => ({
+        pictureName: { hits: allImages },
+        status: 'resolved',
+      }));
+    } catch (error) {
+      this.setState({ error, status: 'rejected' });
+    }
+  };
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.searchName !== this.props.searchName) {
+      this.setState({
+        pictureName: null,
+        status: 'pending',
+        currentPage: 1,
+      });
+      this.searchImages();
+      return;
+    }
+  }
+
+  toggleModal = () => {
+    this.setState(({ openModal }) => ({
+      openModal: !openModal,
     }));
   };
 
@@ -117,7 +113,7 @@ export default class ImageGallery extends Component {
               updateImg={this.updateModalImage}
             />
           </ul>
-          {hits.length > 11 && <Button onClick={this.loadMore} />}
+          {hits.length > 11 && <Button handleLoadMore={this.handleLoadMore} />}
           {openModal && <Modal state={this.state} onClose={this.toggleModal} />}
         </div>
       );
@@ -127,4 +123,8 @@ export default class ImageGallery extends Component {
 
 ImageGallery.propTypes = {
   searchName: PropTypes.string.isRequired,
+  updateImg: PropTypes.func,
+  toggleModal: PropTypes.func,
+  handleLoadMore: PropTypes.func,
+  searchImages: PropTypes.func,
 };

@@ -30,7 +30,7 @@ export default class Modal extends Component {
       state: { currentImage },
     } = this.props;
     return createPortal(
-      <div className="overlay" onClick={this.handleBackDropClick} >
+      <div className="overlay" onClick={this.handleBackDropClick}>
         <div className="modal">
           <img src={currentImage} alt="" />
         </div>
